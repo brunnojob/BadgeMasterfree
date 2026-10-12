@@ -27,7 +27,7 @@ Deploy this repository as a Vercel project using `vercel.json`. The `/api/gatewa
 - `SESSION_SECRET`: a random secret of at least 32 characters; generate locally with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"` and store as sensitive.
 - `FRONTEND_URL`: `https://brunnojob.github.io/BadgeMasterfree/`.
 
-Redeploy after changing environment variables. Set `web/config.js` to the actual production gateway URL if the deployment uses a different domain. Frontend and backend communicate using CORS restricted to the Pages origin and encrypted, short-lived bearer sessions held only in page memory. There are no GitHub tokens in localStorage, sessionStorage or URLs. sessionStorage contains only the ten-minute encrypted OAuth flow and state.
+Redeploy after changing environment variables. Set `web/config.js` to the verified production gateway URL (ending in `/api/gateway`). Its empty default intentionally disables login until the backend is deployed. Frontend and backend communicate using CORS restricted to the Pages origin and encrypted, short-lived bearer sessions held only in page memory. There are no GitHub tokens in localStorage, sessionStorage or URLs. sessionStorage contains only the ten-minute encrypted OAuth flow and state.
 
 The app uses OAuth scopes `read:user`, `public_repo`, `user:follow`. GitHub OAuth's `public_repo` scope is broader than starring alone; the consent screen explains this. The backend exposes only the implemented profile, match, star and follow routes. An OAuth App is not a GitHub App with fine-grained permissions.
 
