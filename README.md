@@ -66,16 +66,3 @@
 | ![Arctic Code Vault Contributor](/Media/Badges/2020-Arctic-Code-Vault-Contributor/PNG/2020ArcticCodeVaultBadge.png) | Arctic Code Vault Contributor | Contributed code to a repository in the [2020 GitHub Archive Program](https://archiveprogram.github.com/) | <table>  <thead>  <tr>  <th>DEFAULT</th>  </tr>  </thead>  <tbody>  <tr>  <td><img src="/Media/Badges/2020-Arctic-Code-Vault-Contributor/PNG/2020ArcticCodeVaultBadge.png" width="60px"></td> </tr>  <tr>  <td align="center">1</td> </tr>   </tbody>  </table> |
 
 <br>
-
-# [bonus] ⭐
-
-####
-you can also fill up your contribution graph in 5 minutes, here's the [tutorial](https://youtu.be/LlkcvvGbs9I) !
-
-<br>
-
-## Credits and license
-
-Adapted from [fenrir2608/badgeMaster](https://github.com/fenrir2608/badgeMaster), based on [drknzz/GitHub-Achievements](https://github.com/drknzz/GitHub-Achievements).
-
-Maintained here by [brunnojob](https://github.com/brunnojob). Distributed under the [MIT License](LICENSE); the original copyright notice is preserved.
