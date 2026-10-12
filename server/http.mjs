@@ -12,6 +12,7 @@ export function createAppServer(){
   try{
    const url=new URL(req.url,'http://localhost');
    if(url.pathname==='/healthz'){res.writeHead(200,{'Content-Type':'application/json'});res.end('{"ok":true}');return;}
+   if((url.pathname==='/'||url.pathname==='/index.html')&&process.env.FRONTEND_URL){res.writeHead(302,{'Location':process.env.FRONTEND_URL,'Cache-Control':'no-store'});res.end();return;}
    if(url.pathname==='/api/gateway'){
     let size=0;const chunks=[];
     for await(const chunk of req){size+=chunk.length;if(size>32768){res.writeHead(413);res.end('Request too large');return;}chunks.push(chunk);}
