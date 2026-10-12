@@ -44,3 +44,13 @@ The app uses OAuth scopes `read:user`, `public_repo`, `user:follow`. GitHub OAut
 ## Checks
 
 Run `npm test` and `npm run build` with Node.js 22 or newer. Tests cover encrypted-session integrity, expiry, PKCE, route validation, missing configuration and origin restrictions. An actual third-party OAuth login must be tested after configuring the OAuth app and backend secrets.
+
+## Fly.io deployment
+
+The repository includes a multi-stage `Dockerfile`, a Node.js HTTP entrypoint and `fly.toml` for the existing `badgemasterfree` app. Deploy the latest `main` commit from the Fly dashboard (not a retry pinned to an older commit), or run `fly deploy --app badgemasterfree` from this checkout.
+
+The service listens on `0.0.0.0:8080`, serves the built frontend, and exposes `/api/gateway` plus `/healthz`. The frontend on GitHub Pages calls `https://badgemasterfree.fly.dev/api/gateway`.
+
+In Fly Secrets, configure `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` and `SESSION_SECRET` (a random value of at least 32 characters). `FRONTEND_URL` is already set to the GitHub Pages URL in `fly.toml`; keep the OAuth homepage and callback set to that exact Pages URL. OAuth remains unavailable until secrets are configured. No secret is needed to build the Docker image or pass the health check.
+
+Local smoke test: `npm run build` followed by `npm start`. Container test: `docker build -t badgemasterfree .` followed by `docker run --rm -p 8080:8080 badgemasterfree`.
