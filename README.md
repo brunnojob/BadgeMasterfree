@@ -2,6 +2,11 @@
 
 # BadgeMasterfree 🏆
 
+[Open the community app](https://brunnojob.github.io/BadgeMasterfree/) · [OAuth and deployment setup](docs/SETUP.md)
+
+Discover public repositories and developers, explicitly choose stars and follows, and view mutual GitHub connections. The web app uses GitHub REST API and a server-side OAuth gateway.
+
+
 # displaying Achievements 🏅
 
 #### Displaying achievements on your profile is completely optional; by default, they can be seen by anyone viewing your public profile.
