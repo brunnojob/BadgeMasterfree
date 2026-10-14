@@ -27,7 +27,7 @@ Deploy this repository as a Vercel project using `vercel.json`. The `/api/gatewa
 - `SESSION_SECRET`: a random secret of at least 32 characters; generate locally with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"` and store as sensitive.
 - `FRONTEND_URL`: `https://brunnojob.github.io/BadgeMasterfree/`.
 
-Redeploy after changing environment variables. Set `web/config.js` to the verified production gateway URL (ending in `/api/gateway`). Its empty default intentionally disables login until the backend is deployed. Frontend and backend communicate using CORS restricted to the Pages origin and encrypted, short-lived bearer sessions held only in page memory. There are no GitHub tokens in localStorage, sessionStorage or URLs. sessionStorage contains only the ten-minute encrypted OAuth flow and state.
+Redeploy after changing environment variables. Set `web/config.js` to the verified production gateway URL (ending in `/api/gateway`). The checked-in gateway points to Fly.io; change it only when moving to another verified backend. Frontend and backend communicate using CORS restricted to the Pages origin and encrypted, short-lived bearer sessions held only in page memory. There are no GitHub tokens in localStorage, sessionStorage or URLs. sessionStorage contains only the ten-minute encrypted OAuth flow and state.
 
 The app uses OAuth scopes `read:user`, `public_repo`, `user:follow`. GitHub OAuth's `public_repo` scope is broader than starring alone; the consent screen explains this. The backend exposes only the implemented profile, match, star and follow routes. An OAuth App is not a GitHub App with fine-grained permissions.
 
@@ -54,3 +54,11 @@ The service listens on `0.0.0.0:8080`, serves the built frontend, and exposes `/
 In Fly Secrets, configure `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` and `SESSION_SECRET` (a random value of at least 32 characters). `FRONTEND_URL` is already set to the GitHub Pages URL in `fly.toml`; keep the OAuth homepage and callback set to that exact Pages URL. OAuth remains unavailable until secrets are configured. No secret is needed to build the Docker image or pass the health check.
 
 Local smoke test: `npm run build` followed by `npm start`. Container test: `docker build -t badgemasterfree .` followed by `docker run --rm -p 8080:8080 badgemasterfree`.
+
+## Diagnose the current login failure
+
+Open `https://badgemasterfree.fly.dev/api/gateway?action=status`. Login works only when `ready` is `true`. The `missing` list reports variable names only, never secret values. A GitHub Pages deployment cannot configure or redeploy the Fly.io backend.
+
+In the existing `badgemasterfree` Fly app, add the OAuth App credentials as Secrets under the exact names `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`, plus a random `SESSION_SECRET` of at least 32 characters. Apply the secrets and deploy this repository's latest commit. Keep the OAuth callback exactly `https://brunnojob.github.io/BadgeMasterfree/`. Do not paste secrets into the repository or the frontend.
+
+For local development, copy `.env.example` to `.env`, fill in the values, build, and run `npm start`; the start script loads `.env`.

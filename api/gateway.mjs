@@ -9,9 +9,11 @@ export async function handler(request) {
   if (incoming && incoming !== origin) return json({error:'Origin not allowed'},403);
   if (request.method==='OPTIONS') return new Response(null,{status:204,headers});
   const action = new URL(request.url).searchParams.get('action');
-  const ready = Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET && process.env.SESSION_SECRET?.length>=32);
-  if (action==='status') return json({ready,callback:frontend,scopes},200,headers);
-  if (!ready) return json({error:'O login está em configuração. Explore os projetos públicos enquanto isso.'},503,headers);
+  const missing = ['GITHUB_CLIENT_ID','GITHUB_CLIENT_SECRET'].filter(name=>!process.env[name]?.trim());
+  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length<32) missing.push('SESSION_SECRET');
+  const ready = missing.length===0;
+  if (action==='status') return json({ready,missing,callback:frontend,scopes},200,headers);
+  if (!ready) return json({error:`Login indisponível: configure ${missing.join(', ')} no servidor e reinicie o serviço.`,code:'OAUTH_NOT_CONFIGURED',missing},503,headers);
   const key=process.env.SESSION_SECRET;
   try {
     if (action==='start' && request.method==='POST') {
@@ -22,10 +24,11 @@ export async function handler(request) {
       return json({url:url.href,flow,state},200,headers);
     }
     if (action==='exchange' && request.method==='POST') {
-      const input=await request.json();
+      let input;try{input=await request.json();}catch{return json({error:'Corpo JSON inválido.'},400,headers);}
+      if(!input || typeof input!=='object' || Array.isArray(input)) return json({error:'Corpo JSON inválido.'},400,headers);
       let flow;
       try {flow=unseal(input.flow,key,'flow');} catch {return json({error:'Login expirado. Tente novamente.'},401,headers);}
-      if(input.state!==flow.state || typeof input.code!=='string' || input.code.length>512) return json({error:'Invalid OAuth state'},400,headers);
+      if(input.state!==flow.state || typeof input.code!=='string' || !input.code.trim() || input.code.length>512) return json({error:'Invalid OAuth state'},400,headers);
       const response=await fetch('https://github.com/login/oauth/access_token',{method:'POST',headers:{Accept:'application/json','Content-Type':'application/json'},body:JSON.stringify({client_id:process.env.GITHUB_CLIENT_ID,client_secret:process.env.GITHUB_CLIENT_SECRET,code:input.code,redirect_uri:frontend,code_verifier:flow.verifier}),signal:AbortSignal.timeout(12000)});
       const data=await response.json();
       if(!response.ok || !data.access_token) return json({error:'O GitHub não autorizou o login. Tente novamente.'},401,headers);
@@ -50,7 +53,9 @@ export async function handler(request) {
       return json({items:following.rows.filter(x=>ids.has(x.id)),truncated:followers.truncated||following.truncated},200,headers);
     }
     if(request.method==='POST' && action==='act') {
-      const {type,target,confirmed}=await request.json();
+      let input;try{input=await request.json();}catch{return json({error:'Corpo JSON inválido.'},400,headers);}
+      if(!input || typeof input!=='object' || Array.isArray(input)) return json({error:'Corpo JSON inválido.'},400,headers);
+      const {type,target,confirmed}=input;
       if(confirmed!==true) return json({error:'Confirme a ação individualmente.'},400,headers);
       let path;try{path=targetPath(type,target);}catch{return json({error:'Destino inválido.'},400,headers);}
       const existing=await gh(path);
