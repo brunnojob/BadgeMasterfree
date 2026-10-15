@@ -4,3 +4,6 @@
 node_modules/
 dist/
 .vercel/
+
+Farm-PRs.ps1
+data_feed_telemetry.csv
