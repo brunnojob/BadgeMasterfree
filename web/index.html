@@ -26,4 +26,23 @@
 <button id="deleteProfile" type="button" class="text-button" hidden>Excluir meu cadastro da comunidade</button>
 </form></dialog>
 <dialog id="consent"><form method="dialog"><div class="eyebrow">VOCÊ ESTÁ NO CONTROLE</div><h2 id="consentTitle">Confirmar ação</h2><p id="consentText"></p><div class="dialog-actions"><button class="button" value="cancel">Cancelar</button><button class="button primary" id="confirm" value="confirm">Confirmar</button></div></form></dialog>
-<dialog id="loginInfo"><form method="dialog"><div class="eyebrow">GITHUB OAUTH</div><h2>Entre ou crie seu cadastro</h2><p>Use sua conta GitHub para se identificar. No primeiro cadastro, você poderá completar seu perfil e destacar projetos. O aplicativo solicita leitura do perfil, permissão para seguir pessoas e <strong>public_repo</strong>, necessária para dar stars via OAuth. Essa última permissão também é ampla sobre repositórios públicos; o aplicativo usa apenas as ações exibidas aqui.</p><p>Não pedimos sua senha nem um token pessoal. A sessão dura até uma hora e termina nesta página ao recarregar. Você pode revogar o acesso nas configurações do GitHub.</p><div class="dialog-actions"><button class="button" value="cancel">Agora não</button><button class="button primary" id="authorize" value="authorize">Continuar no GitHub ↗</button></div></form></dialog><script type="module" src="app.js"></script></body></html>
+<dialog id="loginInfo" class="auth-screen" aria-labelledby="authTitle" aria-describedby="authDescription">
+<form method="dialog" class="auth-layout">
+<div class="auth-content">
+<a class="auth-brand" href="./" aria-label="BadgeMasterfree — início"><img src="badge.png" width="48" height="48" alt=""><span>BADGEMASTERFREE</span></a>
+<h2 id="authTitle">Entrar no BadgeMasterfree</h2>
+<p id="authDescription" class="auth-description">Encontre pessoas, compartilhe projetos<br>e construa sua próxima conexão.</p>
+<div class="auth-panel">
+<p class="auth-label">Sua conta de desenvolvedor</p>
+<div class="auth-provider"><span aria-hidden="true">&lt;/&gt;</span><div><strong>GitHub</strong><small>Seu perfil identifica você na comunidade</small></div><span class="auth-provider-check" aria-hidden="true">✓</span></div>
+<button class="auth-submit" id="authorize" value="authorize" autofocus>Continuar com GitHub</button>
+<p class="auth-destination">Você será direcionado para github.com.</p>
+<p id="authError" class="auth-error" role="alert" hidden></p>
+</div>
+<div class="auth-divider"><span>faça parte da comunidade</span></div>
+<div class="auth-register">Novo por aqui? <button id="authRegister" type="button">Criar uma conta</button></div>
+<details class="auth-permissions"><summary>Permissões e privacidade</summary><p>O GitHub confirma sua identidade. No primeiro acesso, complete seu cadastro com bio, habilidades e projetos.</p><p>Solicitamos leitura do perfil, permissão para seguir pessoas e <strong>public_repo</strong> para stars. Esta permissão também dá acesso amplo aos seus repositórios públicos. Cada star e follow exige confirmação.</p><p>A sessão dura até uma hora e termina ao recarregar a página. Você pode revogar a autorização nas configurações de aplicativos do GitHub.</p></details>
+<button class="auth-back" value="cancel">← Voltar para explorar</button>
+</div>
+<div class="auth-footer"><span>BadgeMasterfree · por brunnojob</span><a href="https://github.com/brunnojob/BadgeMasterfree" target="_blank" rel="noopener noreferrer">Código-fonte</a><span>Conecte-se para construir.</span></div>
+</form></dialog><script type="module" src="app.js"></script></body></html>
