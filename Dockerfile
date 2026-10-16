@@ -14,6 +14,7 @@ COPY --from=build --chown=node:node /app/dist ./dist
 COPY --chown=node:node package.json ./
 COPY --chown=node:node api ./api
 COPY --chown=node:node server ./server
-USER node
+RUN apk add --no-cache su-exec && mkdir -p /data && chown node:node /data
+ENTRYPOINT ["sh", "-c", "chown node:node /data && exec su-exec node \"$@\"", "--"]
 EXPOSE 8080
 CMD ["node", "server/http.mjs"]

@@ -62,3 +62,23 @@ Open `https://badgemasterfree.fly.dev/api/gateway?action=status`. Login works on
 In the existing `badgemasterfree` Fly app, add the OAuth App credentials as Secrets under the exact names `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`, plus a random `SESSION_SECRET` of at least 32 characters. Apply the secrets and deploy this repository's latest commit. Keep the OAuth callback exactly `https://brunnojob.github.io/BadgeMasterfree/`. Do not paste secrets into the repository or the frontend.
 
 For local development, copy `.env.example` to `.env`, fill in the values, build, and run `npm start`; the start script loads `.env`.
+
+## Community registration and project profiles
+
+Registration uses the authenticated GitHub identity, not a separate password. Both **Criar cadastro** and **Entrar** use OAuth; first-time visitors complete a profile after authentication. Existing members edit the same record, identified by the immutable numeric GitHub ID. Public listing is opt-in. Members can save a name, bio, skills, collaboration availability and up to six public repositories owned by their GitHub account. The gateway verifies repository ownership and visibility on each save. Members can hide or delete their profile without changing their GitHub account. Public project links and profile links support networking; existing follows still require individual confirmation.
+
+Profiles are stored server-side in SQLite using Node.js >=22.13, not browser storage. No email, password, OAuth token or session is written to the community database. Directory search is public and paginated (24 results per page). Registration and edits require a valid OAuth session. `status` includes `communityReady` to indicate whether a database path is configured; health checks do not verify disk availability.
+
+For the existing Fly.io backend, provision and mount persistent storage **before enabling registrations**:
+
+```sh
+fly volumes create community_data --region gru --size 1 --app badgemasterfree
+fly scale count 1 --app badgemasterfree
+fly deploy --app badgemasterfree --ha=false
+```
+
+The checked-in `fly.toml` mounts `community_data` at `/data` and configures `COMMUNITY_DB_PATH=/data/community.sqlite`. The container fixes the mount directory ownership before dropping to the unprivileged Node user. Use a single Fly machine with this SQLite store; volumes are local and independent copies do not synchronize. Configure volume snapshots/backups for member data. Do not set this path to temporary storage on a serverless host. The Vercel gateway requires replacing this persistence adapter with a shared durable database before community registration is enabled there.
+
+For local development use `COMMUNITY_DB_PATH=./data/community.sqlite` from `.env.example`. The directory and schema are created automatically. SQLite files are excluded from git and the frontend build. If `COMMUNITY_DB_PATH` is absent, login and discovery remain available while community endpoints return an explicit 503. GitHub Pages deploys only the frontend: deploy the updated Fly backend as well, otherwise the new community routes will be unavailable.
+
+Run `npm test` for persistence across restart, profile validation, visibility, pagination, deletion, authentication and repository ownership checks, then `npm run build`. Complete a real OAuth login after deployment to verify the configured credentials and volume.

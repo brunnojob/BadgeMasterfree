@@ -1,14 +1,17 @@
+import { setupCommunity } from './community.js';
 import { API_BASE } from './config.js';
 import { gatewayRequest } from './gateway.js';
 const $=id=>document.getElementById(id);
+const community=setupCommunity({request:(action,body,params)=>gatewayRequest(API_BASE,action,body,session,params),getViewer:()=>viewer,login:()=>{$('loginInfo').showModal();},toast});
 let session=null,viewer=null,items=[],index=0,mode='repos',busy=false,page=1,lastQuery='',requestVersion=0;
 const fmt=n=>new Intl.NumberFormat('pt-BR',{notation:'compact'}).format(n||0);
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,7000);}
 function node(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
 function link(text,url,cls){const n=node('a',text,cls);n.href=url;n.target='_blank';n.rel='noopener noreferrer';return n;}
 async function api(action,body){try{return await gatewayRequest(API_BASE,action,body,session);}catch(error){if(error.status===401)signOut();throw error;}}
-function signOut(){session=null;viewer=null;$('account').textContent='Explore livremente. Entre para interagir.';$('login').textContent='Entrar com GitHub ↗';$('logout').hidden=true;$('matches').hidden=true;$('matchList').replaceChildren();}
-async function loadViewer(){viewer=await api('me');$('account').textContent=`Conectado como @${viewer.login}`;$('login').textContent=`@${viewer.login}`;$('logout').hidden=false;}
+function signOut(){session=null;viewer=null;$('account').textContent='Explore livremente. Entre para interagir.';$('login').textContent='Entrar com GitHub ↗';$('logout').hidden=true;$('matches').hidden=true;$('matchList').replaceChildren();community.signedOut();}
+async function loadViewer(){viewer=await api('me');$('account').textContent=`Conectado como @${viewer.login}`;$('login').textContent=`@${viewer.login}`;$('logout').hidden=false;await community.signedIn();}
+$('signup').onclick=()=>community.edit();
 $('login').onclick=()=>{if(viewer){$('account').scrollIntoView({behavior:'smooth'});return;}$('loginInfo').showModal();};
 $('authorize').onclick=async event=>{event.preventDefault();$('authorize').disabled=true;try{const data=await api('start',{});sessionStorage.setItem('bm.oauth',JSON.stringify({flow:data.flow,state:data.state}));location.assign(data.url);}catch(e){toast(e.message);$('loginInfo').close();}finally{$('authorize').disabled=false;}};
 $('logout').onclick=()=>{signOut();toast('Sessão encerrada nesta página. Para revogar a autorização, use as configurações de aplicativos do GitHub.');};
@@ -25,4 +28,4 @@ $('star').onclick=()=>propose('star');$('follow').onclick=()=>propose('follow');
 $('confirm').onclick=async e=>{e.preventDefault();if(!pending||busy)return;busy=true;$('confirm').disabled=true;render();try{const result=await api('act',{...pending,confirmed:true});toast(result.match?'É uma conexão! Vocês já se seguem no GitHub.':result.already?'Essa ação já estava registrada no GitHub.':pending.type==='star'?'Star registrada no GitHub.':'Agora você segue esse perfil no GitHub.');$('consent').close();}catch(error){toast(error.message);}finally{busy=false;$('confirm').disabled=false;render();}};
 async function matches(){if(!session){$('loginInfo').showModal();return;}$('matches').hidden=false;$('matches').scrollIntoView({behavior:'smooth'});$('matchList').replaceChildren(node('p','Consultando conexões…'));$('refreshMatches').disabled=true;try{const data=await api('matches');$('matchList').replaceChildren();for(const user of data.items){const a=link('',user.html_url,'match-item');const img=node('img');img.src=user.avatar_url;img.alt='';a.append(img,node('span',`@${user.login}`));$('matchList').append(a);}if(!data.items.length)$('matchList').append(node('p','Nenhuma conexão recíproca encontrada ainda.'));if(data.truncated)$('matchList').append(node('p','Resultado parcial: consulta limitada aos primeiros 1.000 seguidores e perfis seguidos.'));}catch(e){$('matchList').replaceChildren(node('p',e.message));}finally{$('refreshMatches').disabled=false;}}
 for(const id of ['matchesNav','showMatches','refreshMatches'])$(id).onclick=matches;
-await finishLogin();discover();
+await finishLogin();discover();community.load();

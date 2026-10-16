@@ -13,6 +13,7 @@ primary_region = 'gru'
   FRONTEND_URL = 'https://brunnojob.github.io/BadgeMasterfree/'
   NODE_ENV = 'production'
   PORT = '8080'
+  COMMUNITY_DB_PATH = '/data/community.sqlite'
 
 [http_service]
   internal_port = 8080
@@ -33,3 +34,8 @@ primary_region = 'gru'
   cpu_kind = 'shared'
   cpus = 1
   memory_mb = 256
+
+[mounts]
+  source = 'community_data'
+  destination = '/data'
+  initial_size = '1gb'

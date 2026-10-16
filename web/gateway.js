@@ -1,7 +1,8 @@
-export async function gatewayRequest(base, action, body, session) {
+export async function gatewayRequest(base, action, body, session, params={}) {
   if (!base) throw new Error('O endereço do servidor de login não foi configurado.');
   const url = new URL(base, globalThis.location?.href || 'http://localhost/');
   url.searchParams.set('action', action);
+  for(const [key,value] of Object.entries(params)) url.searchParams.set(key,String(value));
   let response;
   try {
     response = await fetch(url, {

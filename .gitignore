@@ -7,3 +7,8 @@ dist/
 
 Farm-PRs.ps1
 data_feed_telemetry.csv
+
+data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

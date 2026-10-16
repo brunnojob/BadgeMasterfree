@@ -4,7 +4,7 @@
 
 [Open the community app](https://brunnojob.github.io/BadgeMasterfree/) · [OAuth and deployment setup](docs/SETUP.md)
 
-Discover public repositories and developers, explicitly choose stars and follows, and view mutual GitHub connections. The web app uses GitHub REST API and a server-side OAuth gateway.
+Discover public repositories and developers, explicitly choose stars and follows, and view mutual GitHub connections. The web app uses GitHub REST API and a server-side OAuth gateway. Members can register with GitHub, create an opt-in public profile, list skills, highlight their public projects and discover collaborators. Community data requires the persistent backend deployment described in the setup guide.
 
 
 # displaying Achievements 🏅
