@@ -82,3 +82,7 @@ The checked-in `fly.toml` mounts `community_data` at `/data` and configures `COM
 For local development use `COMMUNITY_DB_PATH=./data/community.sqlite` from `.env.example`. The directory and schema are created automatically. SQLite files are excluded from git and the frontend build. If `COMMUNITY_DB_PATH` is absent, login and discovery remain available while community endpoints return an explicit 503. GitHub Pages deploys only the frontend: deploy the updated Fly backend as well, otherwise the new community routes will be unavailable.
 
 Run `npm test` for persistence across restart, profile validation, visibility, pagination, deletion, authentication and repository ownership checks, then `npm run build`. Complete a real OAuth login after deployment to verify the configured credentials and volume.
+
+## GitHub account creation
+
+The authentication screen's **Criar conta** flow links to `https://github.com/signup` in a separate tab. Users create their actual GitHub account there, return to BadgeMasterfree, and select **Conectar GitHub** for OAuth. BadgeMasterfree does not collect GitHub passwords or create independent password accounts. Its community profile is an application-specific record associated with the verified GitHub numeric identity.

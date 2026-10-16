@@ -12,12 +12,16 @@ async function api(action,body){try{return await gatewayRequest(API_BASE,action,
 function signOut(){session=null;viewer=null;$('account').textContent='Explore livremente. Entre para interagir.';$('login').textContent='Entrar com GitHub ↗';$('logout').hidden=true;$('matches').hidden=true;$('matchList').replaceChildren();community.signedOut();}
 async function loadViewer(){viewer=await api('me');$('account').textContent=`Conectado como @${viewer.login}`;$('login').textContent=`@${viewer.login}`;$('logout').hidden=false;await community.signedIn();}
 function openLogin(register=false){
-  $('authTitle').textContent=register?'Criar conta no BadgeMasterfree':'Entrar no BadgeMasterfree';
-  $('authorize').textContent=register?'Cadastrar com GitHub':'Continuar com GitHub';
+  $('authTitle').textContent=register?'Crie sua conta no GitHub':'Entrar no BadgeMasterfree';
+  $('authDescription').textContent=register?'Crie seu usuário no GitHub e depois conecte sua conta para conhecer a comunidade.':'Use sua conta GitHub para encontrar pessoas e compartilhar projetos.';
+  $('githubSignup').hidden=!register;
+  $('signupReturn').hidden=!register;
+  $('authorize').classList.toggle('auth-secondary',register);
+  $('authorize').textContent=register?'Conectar GitHub':'Continuar com GitHub';
   $('authError').hidden=true;
   if(!$('loginInfo').open)$('loginInfo').showModal();
 }
-$('authRegister').onclick=()=>{sessionStorage.setItem('bm.register','1');openLogin(true);$('authorize').focus();};
+for(const id of ['authRegister','githubSignup'])$(id).onclick=()=>{sessionStorage.setItem('bm.register','1');openLogin(true);};
 $('signup').onclick=()=>community.edit();
 $('login').onclick=()=>{if(viewer){$('account').scrollIntoView({behavior:'smooth'});return;}openLogin();};
 $('authorize').onclick=async event=>{event.preventDefault();$('authorize').disabled=true;$('authError').hidden=true;const label=$('authorize').textContent;$('authorize').textContent='Conectando ao GitHub…';try{const data=await api('start',{});sessionStorage.setItem('bm.oauth',JSON.stringify({flow:data.flow,state:data.state}));location.assign(data.url);}catch(e){$('authError').textContent=e.message;$('authError').hidden=false;}finally{$('authorize').disabled=false;$('authorize').textContent=label;}};
