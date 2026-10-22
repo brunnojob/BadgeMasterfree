@@ -1,5 +1,5 @@
 import { seal, unseal, random, challenge, targetPath } from '../server/security.mjs';
-import { communityStore, validateProfile } from '../server/community.mjs';
+import { communityStore, communityConfigured, validateProfile } from '../server/community.mjs';
 const scopes = 'read:user public_repo user:follow';
 const json = (data, status=200, headers={}) => Response.json(data,{status,headers});
 export async function handler(request) {
@@ -13,7 +13,7 @@ export async function handler(request) {
   const missing = ['GITHUB_CLIENT_ID','GITHUB_CLIENT_SECRET'].filter(name=>!process.env[name]?.trim());
   if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length<32) missing.push('SESSION_SECRET');
   const ready = missing.length===0;
-  if (action==='status') return json({ready,missing,callback:frontend,scopes,communityReady:Boolean(process.env.COMMUNITY_DB_PATH)},200,headers);
+  if (action==='status') return json({ready,missing,callback:frontend,scopes,communityReady:communityConfigured(),platform:process.env.VERCEL?'vercel':'local'},200,headers);
   if (!ready) return json({error:`Login indisponível: configure ${missing.join(', ')} no servidor e reinicie o serviço.`,code:'OAUTH_NOT_CONFIGURED',missing},503,headers);
   const key=process.env.SESSION_SECRET;
   try {
@@ -41,7 +41,7 @@ export async function handler(request) {
     if (action==='community' && request.method==='GET') {
       const url=new URL(request.url), query=(url.searchParams.get('q')||'').trim(), page=Number(url.searchParams.get('page')||1);
       if(query.length>80 || !Number.isSafeInteger(page) || page<1 || page>100) return json({error:'Busca inválida.'},400,headers);
-      return json(communityStore().list(query,page),200,headers);
+      return json(await (await communityStore()).list(query,page),200,headers);
     }
     let session;
     try {session=unseal(request.headers.get('authorization')?.replace(/^Bearer /,''),key,'session');} catch {return json({error:'Entre novamente com GitHub.'},401,headers);}
@@ -54,16 +54,16 @@ export async function handler(request) {
     if(action==='profile' && ['GET','POST'].includes(request.method)) {
       const user=(await gh('/user')).data;
       if(!user) return json({error:'Identidade GitHub indisponível.'},401,headers);
-      const store=communityStore();
-      if(request.method==='GET') return json({profile:store.get(user.id)},200,headers);
+      const store=await communityStore();
+      if(request.method==='GET') return json({profile:await store.get(user.id)},200,headers);
       let input;try{input=await request.json();}catch{return json({error:'Corpo JSON inválido.'},400,headers);}
-      if(input?.delete===true){store.delete(user.id);return json({ok:true},200,headers);}
+      if(input?.delete===true){await store.delete(user.id);return json({ok:true},200,headers);}
       const profile=validateProfile(input);
       for(const target of profile.projects){
         const repo=await gh(`/repos/${target.split('/').map(encodeURIComponent).join('/')}`);
         if(repo.status!==200 || repo.data.private || repo.data.owner.id!==user.id) return json({error:'Destaque apenas repositórios públicos da sua conta GitHub.'},400,headers);
       }
-      return json({profile:store.save(user,profile)},200,headers);
+      return json({profile:await store.save(user,profile)},200,headers);
     }
     if(request.method==='GET' && action==='me') return json((await gh('/user')).data,200,headers);
     if(request.method==='GET' && action==='matches') {

@@ -21,6 +21,10 @@ export function validateProfile(input) {
   }))];
   return {name,bio,skills,available:input.available,visible:input.visible,projects};
 }
+export function memberProfile(user,input) {
+  if (!Number.isSafeInteger(user.id) || user.id<=0 || !/^[a-zA-Z0-9-]{1,39}$/.test(user.login)) fail('Identidade GitHub inválida.',401);
+  return {...validateProfile(input),id:user.id,login:user.login,avatar:`https://avatars.githubusercontent.com/u/${user.id}`,url:`https://github.com/${user.login}`};
+}
 export class CommunityStore {
   constructor(path) {
     if (path!==':memory:') mkdirSync(dirname(resolve(path)),{recursive:true});
@@ -30,8 +34,7 @@ export class CommunityStore {
   }
   get(id) { const row=this.db.prepare('SELECT profile FROM members WHERE id=?').get(id);return row?JSON.parse(row.profile):null; }
   save(user, input) {
-    if (!Number.isSafeInteger(user.id) || user.id<=0 || !/^[a-zA-Z0-9-]{1,39}$/.test(user.login)) fail('Identidade GitHub inválida.',401);
-    const profile={...validateProfile(input),id:user.id,login:user.login,avatar:`https://avatars.githubusercontent.com/u/${user.id}`,url:`https://github.com/${user.login}`};
+    const profile=memberProfile(user,input);
     this.db.prepare('INSERT INTO members VALUES (?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET login=excluded.login,profile=excluded.profile,visible=excluded.visible,updated=excluded.updated').run(user.id,user.login,JSON.stringify(profile),Number(profile.visible),Date.now());
     return profile;
   }
@@ -44,7 +47,20 @@ export class CommunityStore {
   close() { this.db.close(); }
 }
 let store,path;
-export function communityStore() {
+let remote,remoteUrl;
+export function communityConfigured() {
+  return Boolean(process.env.DATABASE_URL || (!process.env.VERCEL && process.env.COMMUNITY_DB_PATH));
+}
+export async function communityStore() {
+  if(process.env.DATABASE_URL) {
+    if(remoteUrl!==process.env.DATABASE_URL) {
+      const { NeonCommunityStore }=await import('./community-postgres.mjs');
+      remote=new NeonCommunityStore(process.env.DATABASE_URL);
+      remoteUrl=process.env.DATABASE_URL;
+    }
+    return remote;
+  }
+  if(process.env.VERCEL) fail('Cadastro indisponível: conecte um banco Neon Postgres e configure DATABASE_URL na Vercel.',503);
   const next=process.env.COMMUNITY_DB_PATH;
   if (!next) fail('Cadastro indisponível: configure o armazenamento persistente da comunidade no servidor.',503);
   if (path!==next) {store?.close();store=new CommunityStore(next);path=next;}
