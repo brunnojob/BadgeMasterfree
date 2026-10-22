@@ -2,7 +2,7 @@
 
 ## Production architecture
 
-The frontend is published at https://brunnojob.github.io/BadgeMasterfree/ by GitHub Actions. The API runs in the Vercel project `badgemasterfree-api` on Node.js 24. Community profiles use Neon Postgres through `DATABASE_URL`. Local development can use SQLite. Fly.io configuration has been removed from the repository.
+The frontend is published at https://brunnojob.github.io/BadgeMasterfree/ by GitHub Actions. The API runs at https://badgemasterfree-api.vercel.app/api/gateway in the Vercel project `badgemasterfree-api` on Node.js 24. Community profiles use Neon Postgres through `DATABASE_URL`. Local development can use SQLite. Fly.io configuration has been removed from the repository.
 
 ## Vercel project
 
