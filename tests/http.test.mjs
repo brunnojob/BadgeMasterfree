@@ -8,7 +8,14 @@ test('HTTP runtime serves built frontend and gateway without exposing source',as
  const url=`http://127.0.0.1:${server.address().port}`;
  try{
   assert.equal((await fetch(url+'/healthz')).status,200);
-  const page=await fetch(url+'/');assert.equal(page.status,200);assert.match(await page.text(),/BadgeMasterfree/);
+  const page=await fetch(url+'/');assert.equal(page.status,200);const html=await page.text();assert.match(html,/BadgeMasterfree/);
+  const script=html.match(/src="(app\.[a-f0-9]{12}\.js)"/)[1];
+  const style=html.match(/href="(style\.[a-f0-9]{12}\.css)"/)[1];
+  const code=await (await fetch(url+'/'+script)).text();
+  const model=code.match(/from '\.\/(model\.[a-f0-9]{12}\.js)'/)[1];
+  assert.equal((await fetch(url+'/'+model)).status,200);
+  assert.equal((await fetch(url+'/'+style)).status,200);
+  assert.doesNotMatch(code,/vercel\.app|setupCommunity/);
   assert.match((await fetch(url+'/app.js')).headers.get('content-type'),/javascript/);
   assert.equal((await fetch(url+'/.env')).status,404);
   assert.equal((await fetch(url+'/server/security.mjs')).status,404);
