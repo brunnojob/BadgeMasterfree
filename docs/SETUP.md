@@ -1,31 +1,49 @@
-# GitHub Pages deployment
+# Deployment and OAuth setup
 
-The production site is https://brunnojob.github.io/BadgeMasterfree/.
+Frontend: https://brunnojob.github.io/BadgeMasterfree/
 
-## Publish
+API: https://badgemasterfree-api.vercel.app/api/gateway
 
-1. Open repository Settings → Pages.
-2. Set Source to GitHub Actions.
-3. Push to `main`, or run **Publish BadgeMasterfree** manually from Actions.
-4. Wait for the deployment job to succeed. Its environment links to the deployed page.
+## GitHub Pages
 
-The workflow installs locked dependencies, runs tests, builds the static `dist/` directory, uploads it and deploys it with the official Pages actions. The repository already has a working Pages workflow. Pages availability for this public repository does not depend on Developer Program membership.
+Settings → Pages → Source must be GitHub Actions. Pushes to `main` run tests, build `dist/` and deploy with the official Pages actions. The build includes only the frontend modules and selected badge images. Content-hashed module and stylesheet names prevent mixing old scripts with a new page.
 
-## Runtime
+GitHub Pages is the public site host. GitHub Pro and Developer Program membership do not turn Pages into a server for OAuth secrets or authenticated backend operations.
 
-The app calls the public GitHub REST API directly from the browser. No OAuth app, token, secret, database or Vercel gateway is needed. Search and profile lookups are subject to public API limits. Requests have timeouts and display explicit errors.
+## OAuth API
 
-The achievement checklist uses `localStorage` under `bm.plan.v2`. It is a single personal checklist for this browser, independent of the username being inspected. It is not synced to GitHub. If storage is blocked, the app remains usable for the current page session and can export the checklist as Markdown. The coauthor form is processed locally and its name/email are not saved or transmitted by the app.
+The existing Vercel project `badgemasterfree-api` serves `api/gateway.mjs` and the server modules. It must be active with Git deployments enabled. `vercel.json` declares the build, output and API function duration. The API can also run on a Node.js 24 server using `npm start`.
 
-The public GitHub API does not provide a complete authoritative achievement inventory. The UI displays public activity and guides, not verified badge ownership or automatic badge grants. Private contributions are not queried.
+Configure these production variables directly in the provider:
 
-Stars, follows, sponsorships and pull requests are handled on GitHub using direct links. No write permission is requested.
+- `GITHUB_CLIENT_ID`: the existing GitHub OAuth App client ID.
+- `GITHUB_CLIENT_SECRET`: the OAuth App client secret.
+- `SESSION_SECRET`: a random secret of at least 32 characters for encrypted sessions and execution checkpoints.
+- `FRONTEND_URL`: `https://brunnojob.github.io/BadgeMasterfree/`.
 
-## Vercel migration
+The GitHub OAuth App callback URL must match `FRONTEND_URL`, including `/BadgeMasterfree/`. `web/config.js` selects the API endpoint. OAuth uses state, PKCE and `prompt=select_account`. Scopes are `read:user public_repo user:follow`; the `public_repo` scope supports authenticated operations on public repositories, including Discussions. No raw GitHub token is returned to the browser.
 
-`web/config.js` no longer selects a Vercel endpoint. `vercel.json` is removed, and the build explicitly includes only the static frontend files and selected artwork. The former frontend is archived under `legacy/web/`; the optional backend source and tests remain outside the deployed artifact. The historical server instructions are in `docs/LEGACY-SERVER.md`.
+`?action=status` reports configured variable names, readiness, callback and scopes without exposing secrets. Database readiness is unrelated to automation: the legacy community directory needs its separate database, but badge workflows do not.
 
-Repository changes do not automatically disconnect a Vercel Git integration or remove its hosted project. After the Pages deployment has been verified, the old Vercel project's Git connection can be disconnected separately. Preserve or export any member database before retiring infrastructure; the static migration does not move or delete those records.
+## Workflow
+
+1. Sign in with the account that should receive activity credit.
+2. Load its public writable repositories or confirm creation of `ACCOUNT/badgemaster-lab`.
+3. Select Pull Shark, YOLO, Pair Extraordinaire or Galaxy Brain.
+4. Set quantity, title, exact content and optional automatic merge.
+5. For Pair, provide the actual collaborator and confirm their contribution. Use their associated email or the derived GitHub noreply address.
+6. For Galaxy, connect a different helper account and enable Discussions with an answerable Q&A category on the repository. The helper publishes questions and accepts the primary account's answers.
+7. Review the account, repository and content in the preview, then execute.
+
+The browser calls one resumable step at a time, waiting between steps. GitHub performs the actual branch, file, PR, merge and Discussion operations. The server checks the principal's identity and the repository's visibility and permission before each step. The workflow does not disable branch protections, delete branches or overwrite existing session files with different content. If a check, merge rule or API limit blocks a step, the app displays the error and preserves the last checkpoint for a manual resume.
+
+Pull Shark defaults to two PRs, with a maximum of sixteen per run. YOLO and Pair run once. Galaxy runs one or two questions. A completed workflow verifies GitHub records; badge eligibility and eventual display remain under GitHub's control.
+
+## Sessions and privacy
+
+Raw access tokens stay encrypted inside API-issued bearer sessions. The browser stores those encrypted sessions for the primary and helper accounts in sessionStorage, along with the encrypted execution checkpoint, so a second OAuth redirect does not lose the first account. These bearer sessions are sensitive even though their contents are encrypted. They expire within one hour and are cleared by logout. No credential is stored in localStorage, a URL, the repository or build output.
+
+The separate manual checklist uses localStorage key `bm.plan.v2` and is independent of login and inspected profiles. Session-file content, questions, responses and coauthor trailers become public in the selected repository after execution confirmation. The app does not automatically import, expose or delete previous member-directory records.
 
 ## Local validation
 
@@ -33,7 +51,9 @@ Repository changes do not automatically disconnect a Vercel Git integration or r
 npm ci
 npm test
 npm run build
-python3 -m http.server 8080 --directory dist
+npm start
 ```
 
-The static build has no server routes. `npm start` remains the optional legacy backend development command; it is not the Pages preview command.
+For local OAuth, set `FRONTEND_URL` and the OAuth App callback to the matching local address. For a Pages-only preview without OAuth, use `python3 -m http.server 8080 --directory dist`.
+
+Tests cover OAuth state and PKCE, session integrity, attribution, two PR merges, open-only PRs, second-account Discussions, confirmed execution, private-repository rejection and interrupted-step recovery. Provider/API readiness can be checked without logging in. A real OAuth authorization and live activity run require the user to select and authorize their GitHub account.

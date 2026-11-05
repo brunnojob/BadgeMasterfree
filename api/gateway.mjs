@@ -1,3 +1,4 @@
+import { automation } from '../server/automation.mjs';
 import { seal, unseal, random, challenge, targetPath } from '../server/security.mjs';
 import { communityStore, communityConfigured, validateProfile } from '../server/community.mjs';
 const scopes = 'read:user public_repo user:follow';
@@ -21,7 +22,7 @@ export async function handler(request) {
       const state=random(), verifier=random();
       const flow=seal({kind:'flow',state,verifier,exp:Date.now()+600000},key);
       const url=new URL('https://github.com/login/oauth/authorize');
-      url.search=new URLSearchParams({client_id:process.env.GITHUB_CLIENT_ID,redirect_uri:frontend,scope:scopes,state,code_challenge:challenge(verifier),code_challenge_method:'S256',allow_signup:'true'});
+      url.search=new URLSearchParams({client_id:process.env.GITHUB_CLIENT_ID,redirect_uri:frontend,scope:scopes,state,code_challenge:challenge(verifier),code_challenge_method:'S256',allow_signup:'true',prompt:'select_account'});
       return json({url:url.href,flow,state},200,headers);
     }
     if (action==='exchange' && request.method==='POST') {
@@ -65,6 +66,7 @@ export async function handler(request) {
       }
       return json({profile:await store.save(user,profile)},200,headers);
     }
+    if(['repos','lab','prepare','step'].includes(action)) return json(await automation(request,session.token,key),200,headers);
     if(request.method==='GET' && action==='me') return json((await gh('/user')).data,200,headers);
     if(request.method==='GET' && action==='matches') {
       const list=async(path)=>{let rows=[],truncated=false;for(let page=1;page<=10;page++){const r=await gh(`${path}?per_page=100&page=${page}`);rows.push(...r.data);if(!r.next) return {rows,truncated};truncated=page===10;}return {rows,truncated};};

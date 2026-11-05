@@ -7,7 +7,7 @@ export function seal(value, secret) {
   return Buffer.concat([iv, cipher.getAuthTag(), body]).toString('base64url');
 }
 export function unseal(value, secret, kind, now = Date.now()) {
-  if (typeof value !== 'string' || value.length > 12000) throw new Error('Invalid session');
+  if (typeof value !== 'string' || value.length > (kind==='automation'?65536:12000)) throw new Error('Invalid session');
   if (!secret || secret.length < 32) throw new Error('Server session key is not configured');
   const data = Buffer.from(value, 'base64url');
   const decipher = createDecipheriv('aes-256-gcm', createHash('sha256').update(secret).digest(), data.subarray(0,12));

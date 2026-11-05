@@ -1,9 +1,13 @@
+import {createAuth} from './auth.js';
+import {setupAutomation} from './automation-ui.js';
 import {badges, validUsername, coauthorTrailer, normalizeProgress} from './model.js';
 const $=id=>document.getElementById(id);
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 const link=(text,url,cls)=>{const a=el('a',text,cls);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 const format=n=>new Intl.NumberFormat('pt-BR').format(n);
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,6000);}
+const auth=createAuth({toast});
+setupAutomation(auth,{toast});
 let progress={};
 try{progress=normalizeProgress(JSON.parse(localStorage.getItem('bm.plan.v2')||'{}'));}catch{}
 function updateProgress(){const done=Object.values(progress).filter(Boolean).length;$('progressLabel').textContent=`${done} / ${badges.length*3} etapas concluídas`;}
