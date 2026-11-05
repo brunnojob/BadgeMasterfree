@@ -1,42 +1,68 @@
-import { setupCommunity } from './community.js';
-import { API_BASE } from './config.js';
-import { gatewayRequest } from './gateway.js';
+import {badges, validUsername, coauthorTrailer, normalizeProgress} from './model.js';
 const $=id=>document.getElementById(id);
-const community=setupCommunity({request:(action,body,params)=>gatewayRequest(API_BASE,action,body,session,params),getViewer:()=>viewer,login:()=>openLogin(true),toast});
-let session=null,viewer=null,items=[],index=0,mode='repos',busy=false,page=1,lastQuery='',requestVersion=0;
-const fmt=n=>new Intl.NumberFormat('pt-BR',{notation:'compact'}).format(n||0);
-function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,7000);}
-function node(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
-function link(text,url,cls){const n=node('a',text,cls);n.href=url;n.target='_blank';n.rel='noopener noreferrer';return n;}
-async function api(action,body){try{return await gatewayRequest(API_BASE,action,body,session);}catch(error){if(error.status===401)signOut();throw error;}}
-function signOut(){session=null;viewer=null;$('account').textContent='Explore livremente. Entre para interagir.';$('login').textContent='Entrar com GitHub ↗';$('logout').hidden=true;$('matches').hidden=true;$('matchList').replaceChildren();community.signedOut();}
-async function loadViewer(){viewer=await api('me');$('account').textContent=`Conectado como @${viewer.login}`;$('login').textContent=`@${viewer.login}`;$('logout').hidden=false;await community.signedIn();}
-function openLogin(register=false){
-  $('authTitle').textContent=register?'Crie sua conta no GitHub':'Entrar no BadgeMasterfree';
-  $('authDescription').textContent=register?'Crie seu usuário no GitHub e depois conecte sua conta para conhecer a comunidade.':'Use sua conta GitHub para encontrar pessoas e compartilhar projetos.';
-  $('githubSignup').hidden=!register;
-  $('signupReturn').hidden=!register;
-  $('authorize').classList.toggle('auth-secondary',register);
-  $('authorize').textContent=register?'Conectar GitHub':'Continuar com GitHub';
-  $('authError').hidden=true;
-  if(!$('loginInfo').open)$('loginInfo').showModal();
+const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
+const link=(text,url,cls)=>{const a=el('a',text,cls);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
+const format=n=>new Intl.NumberFormat('pt-BR').format(n);
+function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,6000);}
+let progress={};
+try{progress=normalizeProgress(JSON.parse(localStorage.getItem('bm.plan.v2')||'{}'));}catch{}
+function updateProgress(){const done=Object.values(progress).filter(Boolean).length;$('progressLabel').textContent=`${done} / ${badges.length*3} etapas concluídas`;}
+function saveProgress(){try{localStorage.setItem('bm.plan.v2',JSON.stringify(progress));}catch{toast('O armazenamento está indisponível. Exporte o plano para guardar seu progresso.');}updateProgress();}
+for(const badge of badges){
+  const card=el('article',undefined,'badge-card');const top=el('div',undefined,'badge-top');
+  const img=el('img');img.src=`assets/${badge.image}`;img.alt='';img.width=92;img.height=92;img.loading='lazy';
+  top.append(img,el('span',badge.type,'micro'));card.append(top,el('h3',badge.name),el('p',badge.description));
+  const list=el('div',undefined,'checklist');
+  badge.steps.forEach((step,i)=>{const label=el('label');const checkbox=el('input');checkbox.type='checkbox';const key=`${badge.id}:${i}`;checkbox.checked=Boolean(progress[key]);checkbox.onchange=()=>{if(checkbox.checked)progress[key]=true;else delete progress[key];saveProgress();};label.append(checkbox,el('span',step));list.append(label);});
+  card.append(list,link(badge.link+' ↗',badge.url,'plain-link'));$('badgeGrid').append(card);
 }
-for(const id of ['authRegister','githubSignup'])$(id).onclick=()=>{sessionStorage.setItem('bm.register','1');openLogin(true);};
-$('signup').onclick=()=>community.edit();
-$('login').onclick=()=>{if(viewer){$('account').scrollIntoView({behavior:'smooth'});return;}openLogin();};
-$('authorize').onclick=async event=>{event.preventDefault();$('authorize').disabled=true;$('authError').hidden=true;const label=$('authorize').textContent;$('authorize').textContent='Conectando ao GitHub…';try{const data=await api('start',{});sessionStorage.setItem('bm.oauth',JSON.stringify({flow:data.flow,state:data.state}));location.assign(data.url);}catch(e){$('authError').textContent=e.message;$('authError').hidden=false;}finally{$('authorize').disabled=false;$('authorize').textContent=label;}};
-$('logout').onclick=()=>{signOut();toast('Sessão encerrada nesta página. Para revogar a autorização, use as configurações de aplicativos do GitHub.');};
-async function finishLogin(){const params=new URLSearchParams(location.search);if(!params.has('code')&&!params.has('error'))return;history.replaceState(null,'',location.pathname);const saved=sessionStorage.getItem('bm.oauth');sessionStorage.removeItem('bm.oauth');try{if(params.has('error'))throw new Error('Login cancelado no GitHub.');const flow=JSON.parse(saved||'null');if(!flow||flow.state!==params.get('state'))throw new Error('A sessão de login não confere. Entre novamente.');const result=await api('exchange',{...flow,code:params.get('code')});session=result.session;try{await loadViewer();}catch(error){signOut();throw error;}setTimeout(()=>{signOut();toast('Sessão expirada. Entre novamente para interagir.');},Math.max(0,result.expiresAt-Date.now()));toast(`Bem-vindo, @${viewer.login}. Escolha seu próximo projeto.`);}catch(e){toast(e.message);}}
-async function github(path){const r=await fetch(`https://api.github.com${path}`,{headers:{Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}});if(!r.ok)throw new Error(r.status===403||r.status===429?'Limite de consulta pública do GitHub atingido. Aguarde antes de atualizar.':'Não foi possível buscar os dados do GitHub.');return r.json();}
-function render(){const card=$('card');card.replaceChildren();const item=items[index];$('position').textContent=item?`${index+1} / ${items.length}`:'0 / 0';for(const id of ['star','follow','skip'])$(id).disabled=!item||busy;$('star').hidden=mode!=='repos';document.querySelector('.action-labels').children[1].hidden=mode!=='repos';if(!item){card.append(node('p','Nenhum resultado por aqui. Experimente outro tema ou linguagem.','empty'));return;}const owner=mode==='repos'?item.owner:item;const row=node('div',undefined,'card-owner');const avatar=node('img');avatar.src=owner.avatar_url;avatar.alt=`Avatar de ${owner.login}`;avatar.referrerPolicy='no-referrer';row.append(avatar,link(`@${owner.login}`,owner.html_url));card.append(row,node('div',mode==='repos'?'OPEN SOURCE / REPOSITÓRIO':'COMUNIDADE / DESENVOLVEDOR','card-type'),node('h3',mode==='repos'?item.name:owner.login),node('p',mode==='repos'?(item.description||'Explore o código e conheça este projeto.'): 'Conheça os projetos deste perfil e descubra interesses em comum.','description'));const tags=node('div',undefined,'tags');for(const value of (mode==='repos'?[item.language,...(item.topics||[]).slice(0,3)]:['GitHub','Perfil público']).filter(Boolean))tags.append(node('span',value,'tag'));card.append(tags);const bottom=node('div',undefined,'card-bottom');bottom.append(node('span',mode==='repos'?`★ ${fmt(item.stargazers_count)} stars · ⑂ ${fmt(item.forks_count)} forks`:'Uma nova conexão começa aqui'),link('Explorar no GitHub ↗',item.html_url));card.append(bottom);}
-async function discover(more=false){const version=++requestVersion;busy=true;render();$('card').replaceChildren(node('p','Buscando no GitHub…','empty'));try{if(!more)page=1;const term=$('topic').value.trim().replace(/[\r\n]/g,' ');const language=$('language').value;const query=mode==='repos'?`${term||'topic:good-first-issue'} archived:false is:public${language?` language:"${language}"`:''}`:`${term||'type:user repos:>0'}${language?` language:"${language}"`:''}`;lastQuery=query;const result=await github(`/search/${mode==='repos'?'repositories':'users'}?q=${encodeURIComponent(query)}&sort=updated&order=desc&per_page=30&page=${page}`);if(version!==requestVersion)return;items=result.items||[];index=0;}catch(e){if(version!==requestVersion)return;items=[];toast(e.message);}finally{if(version===requestVersion){busy=false;render();}}}
-$('search').onclick=()=>discover();$('topic').onkeydown=e=>{if(e.key==='Enter')discover();};
-for(const [id,value] of [['reposTab','repos'],['peopleTab','people']])$(id).onclick=()=>{mode=value;for(const key of ['reposTab','peopleTab']){const active=key===id;$(key).classList.toggle('active',active);$(key).setAttribute('aria-pressed',String(active));}$('modeLabel').textContent=value==='repos'?'DESCOBRINDO REPOSITÓRIOS':'DESCOBRINDO PESSOAS';discover();};
-$('skip').onclick=()=>{if(index+1<items.length){index++;render();}else{page++;discover(true);}};
-let pending=null;
-function propose(type){if(!session){openLogin();return;}const item=items[index];if(!item||busy)return;const target=type==='star'?item.full_name:(mode==='repos'?item.owner.login:item.login);if(type==='follow'&&target===viewer?.login){toast('Este é o seu próprio perfil. Explore a próxima conexão.');return;}pending={type,target};$('consentTitle').textContent=type==='star'?'Dar uma star?':'Seguir este perfil?';$('consentText').textContent=type==='star'?`Você vai marcar ${target} com uma star na sua conta @${viewer.login}. Isso não exige nem garante uma star de volta.`:`Você vai seguir @${target} com sua conta @${viewer.login}. Se a pessoa já segue você, aparecerá como conexão recíproca.`;$('consent').showModal();}
-$('star').onclick=()=>propose('star');$('follow').onclick=()=>propose('follow');
-$('confirm').onclick=async e=>{e.preventDefault();if(!pending||busy)return;busy=true;$('confirm').disabled=true;render();try{const result=await api('act',{...pending,confirmed:true});toast(result.match?'É uma conexão! Vocês já se seguem no GitHub.':result.already?'Essa ação já estava registrada no GitHub.':pending.type==='star'?'Star registrada no GitHub.':'Agora você segue esse perfil no GitHub.');$('consent').close();}catch(error){toast(error.message);}finally{busy=false;$('confirm').disabled=false;render();}};
-async function matches(){if(!session){openLogin();return;}$('matches').hidden=false;$('matches').scrollIntoView({behavior:'smooth'});$('matchList').replaceChildren(node('p','Consultando conexões…'));$('refreshMatches').disabled=true;try{const data=await api('matches');$('matchList').replaceChildren();for(const user of data.items){const a=link('',user.html_url,'match-item');const img=node('img');img.src=user.avatar_url;img.alt='';a.append(img,node('span',`@${user.login}`));$('matchList').append(a);}if(!data.items.length)$('matchList').append(node('p','Nenhuma conexão recíproca encontrada ainda.'));if(data.truncated)$('matchList').append(node('p','Resultado parcial: consulta limitada aos primeiros 1.000 seguidores e perfis seguidos.'));}catch(e){$('matchList').replaceChildren(node('p',e.message));}finally{$('refreshMatches').disabled=false;}}
-for(const id of ['matchesNav','showMatches','refreshMatches'])$(id).onclick=matches;
-await finishLogin();discover();community.load();
+updateProgress();
+for(const button of document.querySelectorAll('[data-tool]'))button.onclick=()=>{
+  for(const other of document.querySelectorAll('[data-tool]')){const active=other===button;other.classList.toggle('active',active);other.setAttribute('aria-pressed',String(active));$(other.dataset.tool+'Panel').hidden=!active;}
+};
+async function github(path,signal){
+  const response=await fetch('https://api.github.com'+path,{headers:{Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},signal:signal?AbortSignal.any([signal,AbortSignal.timeout(20000)]):AbortSignal.timeout(20000)});
+  if(!response.ok){if(response.status===404)throw new Error('Perfil não encontrado. Confira o usuário.');if([403,429].includes(response.status))throw new Error('Limite público do GitHub atingido. Aguarde alguns minutos e tente novamente.');throw new Error('O GitHub não respondeu à consulta. Tente novamente.');}
+  return response.json();
+}
+let profileController;
+$('profileForm').onsubmit=async event=>{
+  event.preventDefault();const username=$('username').value.trim();if(!validUsername(username)){toast('Digite um usuário GitHub válido.');return;}
+  profileController?.abort();profileController=new AbortController();const controller=profileController;$('analyze').disabled=true;$('profileResult').replaceChildren(el('p','Consultando o perfil público…'));
+  try{
+    const profile=await github(`/users/${encodeURIComponent(username)}`,controller.signal);
+    const summary=el('div',undefined,'profile-summary');const image=el('img');image.src=profile.avatar_url;image.alt='';image.width=48;image.height=48;summary.append(image,link('@'+profile.login,profile.html_url),el('span',profile.bio||'Construindo em público.'));
+    const stats=el('div',undefined,'stats');for(const [value,label] of [[profile.public_repos,'repositórios públicos'],[profile.followers,'seguidores'],[profile.following,'seguindo']]){const stat=el('div');stat.append(el('strong',format(value)),el('span',label));stats.append(stat);}
+    $('profileResult').replaceChildren(summary,stats);
+    const prs=el('p','Consultando PRs mesclados…','hint');$('profileResult').append(prs);
+    try{const result=await github(`/search/issues?q=${encodeURIComponent('is:pr is:merged author:'+profile.login)}&per_page=1`,controller.signal);prs.replaceChildren(link(`${format(result.total_count)} PRs públicos mesclados ↗`,`https://github.com/search?q=${encodeURIComponent('is:pr is:merged author:'+profile.login)}&type=pullrequests`));if(result.incomplete_results)prs.append(' · resultado parcial');}
+    catch(error){if(controller.signal.aborted)return;prs.textContent='PRs indisponíveis: '+error.message;}
+    $('profileResult').append(el('p','Consulta pública de atividade; não verifica badges concedidas nem inclui contribuições privadas.','hint'));
+  }catch(error){if(!controller.signal.aborted)$('profileResult').replaceChildren(el('p',error.name==='TimeoutError'?'O GitHub demorou para responder. Tente novamente.':error.message));}
+  finally{if(profileController===controller)$('analyze').disabled=false;}
+};
+$('coauthorForm').onsubmit=event=>{event.preventDefault();try{$('trailer').value=coauthorTrailer($('coauthorName').value,$('coauthorEmail').value);}catch(error){toast(error.message);}};
+$('copyTrailer').onclick=async()=>{if(!$('trailer').value){toast('Gere um trailer primeiro.');return;}try{await navigator.clipboard.writeText($('trailer').value);toast('Trailer copiado.');}catch{$('trailer').focus();$('trailer').select();toast('Selecione e copie o trailer com Ctrl+C.');}};
+$('exportPlan').onclick=()=>{const text=['# Meu plano — BadgeMasterfree','',...badges.flatMap(b=>['## '+b.name,...b.steps.map((s,i)=>`- [${progress[`${b.id}:${i}`]?'x':' '}] ${s}`),'']),'Criado com https://brunnojob.github.io/BadgeMasterfree/'].join('\n');const url=URL.createObjectURL(new Blob([text],{type:'text/markdown;charset=utf-8'}));const a=el('a');a.href=url;a.download='badgemasterfree-plan.md';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+function setupSearch(kind){
+  const isRepo=kind==='repo', prefix=isRepo?'repo':'people', form=$(prefix+'Form'), results=$(prefix+'Results'), more=$(isRepo?'moreRepos':'morePeople');
+  let page=1,query='',controller;
+  async function run(append=false){
+    controller?.abort();controller=new AbortController();const current=controller;const submit=form.querySelector('button');submit.disabled=true;more.hidden=true;
+    if(!append)results.replaceChildren(el('p','Consultando o GitHub…'));
+    try{const data=await github(`/search/${isRepo?'repositories':'users'}?q=${encodeURIComponent(query)}&per_page=12&page=${page}&sort=${isRepo?'updated':'followers'}&order=desc`,current.signal);if(current.signal.aborted)return;if(!append)results.replaceChildren();
+      for(const item of data.items){const card=el('article',undefined,'result-card');const owner=isRepo?item.owner:item;const image=el('img');image.src=owner.avatar_url;image.alt='';image.width=40;image.height=40;image.loading='lazy';card.append(image,el('h3',isRepo?item.full_name:item.login),el('p',isRepo?(item.description||'Conheça o projeto e seu código-fonte.'):'Explore os projetos e as contribuições deste perfil.'));
+        if(isRepo)card.append(el('div',`${item.language||'Open source'} · ${format(item.stargazers_count)} stars`,'micro'));
+        card.append(link(isRepo?'Explorar projeto ↗':'Conhecer perfil ↗',item.html_url,'plain-link'));
+        if(isRepo)card.append(link('Ver issues abertas ↗',item.html_url+'/issues','plain-link'));
+        results.append(card);
+      }
+      if(!data.items.length&&!append)results.append(el('p','Nenhum resultado. Experimente outro termo.'));
+      more.hidden=data.items.length<12||page*12>=Math.min(data.total_count,1000);if(data.incomplete_results)results.append(el('p','O GitHub retornou resultados parciais.','hint'));
+    }catch(error){if(current.signal.aborted)return;if(append){page--;more.hidden=false;toast(error.message);}else results.replaceChildren(el('p',error.name==='TimeoutError'?'A consulta demorou. Tente novamente.':error.message));}
+    finally{if(controller===current)submit.disabled=false;}
+  }
+  form.onsubmit=event=>{event.preventDefault();page=1;const input=$(prefix+'Query').value.trim().replace(/[\r\n]/g,' ');query=isRepo?`${input||'topic:good-first-issue'} archived:false is:public${$('language').value?` language:"${$('language').value}"`:''}`:(input||'type:user repos:>0');run();};
+  more.onclick=()=>{page++;run(true);};
+}
+setupSearch('repo');setupSearch('people');

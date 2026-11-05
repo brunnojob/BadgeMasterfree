@@ -1,73 +1,44 @@
-<!-- <div align="center"> -->
+# BadgeMasterfree
 
-# BadgeMasterfree 🏆
+An open source GitHub achievement workbench by [brunnojob](https://github.com/brunnojob).
 
-[Open the community app](https://brunnojob.github.io/BadgeMasterfree/) · [OAuth and deployment setup](docs/SETUP.md)
+[Open the lab](https://brunnojob.github.io/BadgeMasterfree/) · [Deployment guide](docs/SETUP.md)
 
-Discover public repositories and developers, explicitly choose stars and follows, and view mutual GitHub connections. The web app uses GitHub REST API and a server-side OAuth gateway. Members can register with GitHub, create an opt-in public profile, list skills, highlight their public projects and discover collaborators. The API runs on Vercel; opt-in community profiles require the Neon Postgres setup described in the deployment guide.
+BadgeMasterfree brings achievement planning, public profile analysis and open source discovery into one browser app. Its charcoal, lime and monospace visual identity builds on the project's own design. GitHubCrazy's three-tool navigation inspired the organization; the interface and implementation are original.
 
+## Tools
 
-# displaying Achievements 🏅
+- Achievement workbench: six contribution guides, a local checklist and a downloadable Markdown plan.
+- Profile analysis: public repository, follower and following counts, plus public merged PR search.
+- Collaboration helper: validated `Co-authored-by` trailer generation and clipboard copy.
+- Project discovery: public GitHub repository search with language filters and pagination.
+- Developer discovery: public profile search with links to GitHub.
 
-#### Displaying achievements on your profile is completely optional; by default, they can be seen by anyone viewing your public profile.
+The app runs entirely on GitHub Pages. It requires no login, token, database or Vercel API. Stars, follows and contributions take place on GitHub. Checklist entries are personal notes stored in this browser, shared across profile lookups; they are not verified achievements. Export the plan to keep a portable copy.
 
-#### You can opt out from having achievements displayed on your profile by going to your [profile settings](https://github.com/settings).
+GitHub controls achievement eligibility and display. Public metrics cannot verify all achievement conditions or private activity. This app automates preparation and organization, not the award of badges. Sponsors may involve paid support chosen separately on GitHub.
 
-<br>
+## Development
 
-# achievement List 📃
-<br>
+Use Node.js 24:
 
-| badge | name | how to Get | needed Amount | 
-| :-: | :-: | :-: | :-: |
-| ![Starstruck](/Media/Badges/Star-Struck/PNG/Skin-Tones/StarStruck_SkinTone1.png)                 | Starstruck         | Created a repository that has many stars | <table>  <thead>  <tr>  <th>DEFAULT</th> <th>BRONZE</th>  <th>SILVER</th>  <th>GOLD</th>  </tr>  </thead>  <tbody>  <tr>  <td align="center"><img src="/Media/Badges/Star-Struck/PNG/Skin-Tones/StarStruck_SkinTone1.png" width="60px"></td>   <td><img src="/Media/Badges/Star-Struck/PNG/StarStruck_Bronze.png" width="60px" align="center"></td>  <td><img src="/Media/Badges/Star-Struck/PNG/StarStruck_Silver.png" width="60px"></td>  <td><img src="/Media/Badges/Star-Struck/PNG/StarStruck_Gold.png" width="60px"></td>  </tr>  <tr>  <td align="center">16</td>  <td align="center">128</td>  <td align="center">512</td>  <td align="center">4096</td>  </tr>   </tbody>  </table>      |
-| ![Quickdraw](/Media/Badges/Quick-Draw/PNG/Skin-Tones/QuickDraw_SkinTone1.png)                 | Quickdraw        | Gitty up!<br>(closed an issue / pull request within 5 minutes of opening) | <table>  <thead>  <tr>  <th>DEFAULT</th>  </tr>  </thead>  <tbody>  <tr>  <td><img src="/Media/Badges/Quick-Draw/PNG/Skin-Tones/QuickDraw_SkinTone1.png" width="60px"></td> </tr>  <tr>  <td align="center">1</td> </tr>   </tbody>  </table> |
-| ![Pair Extraordinaire](/Media/Badges/Pair-Extraordinaire/PNG/PairExtraordinaire.png)     | Pair Extraordinaire  | [Coauthored](https://docs.github.com/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors) commits on merged pull request | <table>  <thead>  <tr>  <th>DEFAULT</th> <th>BRONZE</th>  <th>SILVER</th>  <th>GOLD</th>  </tr>  </thead>  <tbody>  <tr>  <td align="center"><img src="/Media/Badges/Pair-Extraordinaire/PNG/PairExtraordinaire.png" width="60px"></td>   <td><img src="/Media/Badges/Pair-Extraordinaire/PNG/PairExtraordinaire_Bronze.png" width="60px" align="center"></td>  <td><img src="/Media/Badges/Pair-Extraordinaire/PNG/PairExtraordinaire_Silver.png" width="60px"></td>  <td><img src="/Media/Badges/Pair-Extraordinaire/PNG/PairExtraordinaire_Gold.png" width="60px"></td>  </tr>  <tr>  <td align="center">1</td>  <td align="center">10</td>  <td align="center">24</td>  <td align="center">48</td>  </tr>   </tbody>  </table>      |
-| ![Pull Shark](/Media/Badges/Pull-Shark/PNG/PullShark.png)     | Pull Shark  | Opened a pull request that has been merged | <table>  <thead>  <tr>  <th>DEFAULT</th> <th>BRONZE</th>  <th>SILVER</th>  <th>GOLD</th>  </tr>  </thead>  <tbody>  <tr>  <td align="center"><img src="/Media/Badges/Pull-Shark/PNG/PullShark.png" width="60px"></td>   <td><img src="/Media/Badges/Pull-Shark/PNG/PullShark_Bronze.png" width="60px" align="center"></td>  <td><img src="/Media/Badges/Pull-Shark/PNG/PullShark_Silver.png" width="60px"></td>  <td><img src="/Media/Badges/Pull-Shark/PNG/PullShark_Gold.png" width="60px"></td>  </tr>  <tr>  <td align="center">2</td>  <td align="center">16</td>  <td align="center">128</td>  <td align="center">1024</td>  </tr>   </tbody>  </table>      |
-| ![Galaxy Brain](/Media/Badges/Galaxy-Brain/PNG/GalaxyBrain.png) | Galaxy Brain | Answered a discussion<br>(got an accepted answer) | <table>  <thead>  <tr>  <th>DEFAULT</th> <th>BRONZE</th>  <th>SILVER</th>  <th>GOLD</th>  </tr>  </thead>  <tbody>  <tr>  <td><img src="/Media/Badges/Galaxy-Brain/PNG/GalaxyBrain.png" width="60px"></td>  <td><img src="/Media/Badges/Galaxy-Brain/PNG/GalaxyBrain_Bronze.png" width="60px" align="center"></td>  <td><img src="/Media/Badges/Galaxy-Brain/PNG/GalaxyBrain_Silver.png" width="60px"></td>  <td><img src="/Media/Badges/Galaxy-Brain/PNG/GalaxyBrain_Gold.png" width="60px"></td>  </tr>  <tr>  <td align="center">2</td> <td align="center">8</td>  <td align="center">16</td>  <td align="center">32</td>  </tr>   </tbody>  </table>
-| ![YOLO](/Media/Badges/YOLO/PNG/YOLO_Badge.png)                 | YOLO        | Merged a pull request without a review | <table>  <thead>  <tr>  <th>DEFAULT</th>  </tr>  </thead>  <tbody>  <tr>  <td><img src="/Media/Badges/YOLO/PNG/YOLO_Badge.png" width="60px"></td> </tr>  <tr>  <td align="center">1</td> </tr>   </tbody>  </table> |
-| ![Public Sponsor](/Media/Badges/GitHub-Sponsor/PNG/GitHubSponsorBadge.png)                 | Public Sponsor        | Sponsored an open source contributor through [GitHub Sponsors](https://github.com/sponsors) | <table>  <thead>  <tr>  <th>DEFAULT</th>  </tr>  </thead>  <tbody>  <tr>  <td><img src="/Media/Badges/GitHub-Sponsor/PNG/GitHubSponsorBadge.png" width="60px"></td> </tr>  <tr>  <td align="center">1</td> </tr>   </tbody>  </table> |
+```sh
+npm ci
+npm test
+npm run build
+python3 -m http.server 8080 --directory dist
+```
 
+Open `http://localhost:8080`. `dist/` contains only the static app and its selected badge artwork. All asset references are relative so the app works under `/BadgeMasterfree/`.
 
-<br>
+## Deployment
 
-# achievement skin Tone 👋
+Pushes to `main` run tests, build the site and publish through `.github/workflows/pages.yml`. Select **GitHub Actions** as the Pages source. No deployment secrets are needed. Public API quotas apply; failures are shown in the app without inventing results.
 
-#### Some achievements' appearance depends on your Emoji Skin Tone Preference.
+## Previous server version
 
-#### You can change your preferred Skin Tone by going to [appearance settings](https://github.com/settings/appearance).
+The previous OAuth and opt-in member directory UI is preserved in `legacy/web/`. Its server modules and tests remain available, with historical configuration in [LEGACY-SERVER.md](docs/LEGACY-SERVER.md). These files are excluded from the Pages build. Existing member records are not imported, deleted or exposed by the static app. The public version replaces in-app OAuth, member registration and mutual-connection queries with public discovery and direct GitHub links.
 
-<br>
+## Credits and license
 
-| badge | name | skin tone Versions | 
-| :-: | :-: | :-: |
-| ![Starstruck](/Media/Badges/Star-Struck/PNG/Skin-Tones/StarStruck_SkinTone1.png)                 | Starstruck         | <table>  <thead>  <tr>  <th>👋</th> <th>👋🏻</th>  <th>👋🏼</th>  <th>👋🏽</th>  <th>👋🏾</th>  <th>👋🏿</th>  </tr>  </thead>  <tbody>  <tr>  <td align="center"><img src="/Media/Badges/Star-Struck/PNG/Skin-Tones/StarStruck_SkinTone1.png" width="60px"></td>   <td align="center"><img src="/Media/Badges/Star-Struck/PNG/Skin-Tones/StarStruck_SkinTone2.png" width="60px"></td>  <td align="center"><img src="/Media/Badges/Star-Struck/PNG/Skin-Tones/StarStruck_SkinTone3.png" width="60px"></td>  <td align="center"><img src="/Media/Badges/Star-Struck/PNG/Skin-Tones/StarStruck_SkinTone4.png" width="60px"></td>  <td align="center"><img src="/Media/Badges/Star-Struck/PNG/Skin-Tones/StarStruck_SkinTone5.png" width="60px"></td>   <td align="center"><img src="/Media/Badges/Star-Struck/PNG/Skin-Tones/StarStruck_SkinTone6.png" width="60px"></td>   </tr>   <tr>  <td align="center">👋</td> <td align="center">👋🏻</td>  <td align="center">👋🏼</td>  <td align="center">👋🏽</td>  <td align="center">👋🏾</td>  <td align="center">👋🏿</td>  </tr>  </tbody>  </table>      |
-| ![Quickdraw](/Media/Badges/Quick-Draw/PNG/Skin-Tones/QuickDraw_SkinTone1.png)                 | Quickdraw         | <table>  <thead>  <tr>  <th>👋</th> <th>👋🏻</th>  <th>👋🏼</th>  <th>👋🏽</th>  <th>👋🏾</th>  <th>👋🏿</th>  </tr>  </thead>  <tbody>  <tr>  <td align="center"><img src="/Media/Badges/Quick-Draw/PNG/Skin-Tones/QuickDraw_SkinTone1.png" width="60px"></td>   <td align="center"><img src="Media/Badges/Quick-Draw/PNG/Skin-Tones/QuickDraw_SkinTone2.png" width="60px"></td>  <td align="center"><img src="Media/Badges/Quick-Draw/PNG/Skin-Tones/QuickDraw_SkinTone3.png" width="60px"></td>  <td align="center"><img src="Media/Badges/Quick-Draw/PNG/Skin-Tones/QuickDraw_SkinTone4.png" width="60px"></td>  <td align="center"><img src="Media/Badges/Quick-Draw/PNG/Skin-Tones/QuickDraw_SkinTone5.png" width="60px"></td>   <td align="center"><img src="Media/Badges/Quick-Draw/PNG/Skin-Tones/QuickDraw_SkinTone6.png" width="60px"></td>   </tr>   <tr>  <td align="center">👋</td> <td align="center">👋🏻</td>  <td align="center">👋🏼</td>  <td align="center">👋🏽</td>  <td align="center">👋🏾</td>  <td align="center">👋🏿</td>  </tr>  </tbody>  </table>      |
-
-
-<br>
-
-# highlights Badges ✨
-<br>
-
-<!-- TODO Some of these should have light mode first, and dark mode second. For consistency. - @seanpm2001 !-->
-
-| badge | name | how to Get |
-| :-: | :-: | :-: |
-| ![pro-black](/Media/Highlights/GitHub-Pro/SVG/GitHub-Pro_DarkMode.svg#gh-light-mode-only) ![pro-white](Media/Highlights/GitHub-Pro/SVG/GitHub-Pro_LightMode.svg#gh-dark-mode-only) | Pro | Use [GitHub Pro](https://docs.github.com/en/get-started/learning-about-github/githubs-products#github-pro) |
-| ![developer-program-member-dark](/Media/Highlights/Developer-Program-Member/SVG/DeveloperProgramMember_LightMode.svg#gh-dark-mode-only)![developer-program-member-light](/Media/Highlights/Developer-Program-Member/SVG/DeveloperProgramMember_DarkMode.svg#gh-light-mode-only) | Developer Program Member | Be a registered member of the [GitHub Developer Program](https://docs.github.com/en/developers/overview/github-developer-program) |
-| ![security-bug-bounty-hunter-dark](/Media/Highlights/Security-Bug-Bounty-Hunter/SVG/Security-Bug-Bounty-Hunter_LightMode.svg#gh-dark-mode-only)![security-bug-bounty-hunter-light](Media/Highlights/Security-Bug-Bounty-Hunter/SVG/Security-Bug-Bounty-Hunter_DarkMode.svg#gh-light-mode-only) | Security Bug Bounty Hunter | Helped out hunting down security vulnerabilities at [GitHub Security](https://bounty.github.com/) |
-| ![github-campus-expert-dark](/Media/Highlights/GitHub-Campus-Expert/SVG/GitHub-Campus-Expert_LightMode.svg#gh-dark-mode-only)![github-campus-expert-light](/Media/Highlights/GitHub-Campus-Expert/SVG/GitHub-Campus-Expert_DarkMode.svg#gh-light-mode-only) | GitHub Campus Expert | Participate in the [GitHub Campus Program](https://education.github.com/experts) |
-| ![security-advisory-credit-dark](/Media/Highlights/Security-Advisory-Credit/SVG/Security-Advisory-Credit_LightMode.svg#gh-dark-mode-only)![security-advisory-credit-light](/Media/Highlights/Security-Advisory-Credit/SVG/Security-Advisory-Credit_DarkMode.svg#gh-light-mode-only) | Security advisory credit | Have your security advisory submitted to the [GitHub Advisory Database](https://github.com/advisories) accepted |
-
-<br>
-
-# badges no longer earnable ❌
-<br>
-
-| Badge | Name | How to get | Needed amount | 
-| :-: | :-: | :-: | :-: |
-| ![Mars 2020 Contributor](/Media/Badges/Mars-2020-Contributor/PNG/Mars2020ContributorBadge.png)     | Mars 2020 Contributor  | Contributed code to a repository used in the [Mars 2020 Helicopter Mission](https://github.com/readme/featured/nasa-ingenuity-helicopter) | <table>  <thead>  <tr>  <th>DEFAULT</th>  </tr>  </thead>  <tbody>  <tr>  <td><img src="/Media/Badges/Mars-2020-Contributor/PNG/Mars2020ContributorBadge.png" width="60px"></td> </tr>  <tr>  <td align="center">1</td> </tr>   </tbody>  </table> |
-| ![Arctic Code Vault Contributor](/Media/Badges/2020-Arctic-Code-Vault-Contributor/PNG/2020ArcticCodeVaultBadge.png) | Arctic Code Vault Contributor | Contributed code to a repository in the [2020 GitHub Archive Program](https://archiveprogram.github.com/) | <table>  <thead>  <tr>  <th>DEFAULT</th>  </tr>  </thead>  <tbody>  <tr>  <td><img src="/Media/Badges/2020-Arctic-Code-Vault-Contributor/PNG/2020ArcticCodeVaultBadge.png" width="60px"></td> </tr>  <tr>  <td align="center">1</td> </tr>   </tbody>  </table> |
-
-<br>
+Maintained by [brunnojob](https://github.com/brunnojob) · [brunnodev.store](https://brunnodev.store). Existing artwork and its history are retained in `Media/`; GitHub achievement names and images belong to their respective owners. See [LICENSE](LICENSE) for the repository's existing license.

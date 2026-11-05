@@ -1,68 +1,39 @@
-# Deployment and OAuth setup
+# GitHub Pages deployment
 
-## Production architecture
+The production site is https://brunnojob.github.io/BadgeMasterfree/.
 
-The frontend is published at https://brunnojob.github.io/BadgeMasterfree/ by GitHub Actions. The API runs at https://badgemasterfree-api.vercel.app/api/gateway in the Vercel project `badgemasterfree-api` on Node.js 24. Community profiles use Neon Postgres through `DATABASE_URL`. Local development can use SQLite. Fly.io configuration has been removed from the repository.
+## Publish
 
-## Vercel project
+1. Open repository Settings → Pages.
+2. Set Source to GitHub Actions.
+3. Push to `main`, or run **Publish BadgeMasterfree** manually from Actions.
+4. Wait for the deployment job to succeed. Its environment links to the deployed page.
 
-Connect `brunnojob/BadgeMasterfree` to the existing `badgemasterfree-api` project in `brunnojobs-projects`, with production branch `main`, framework Other, build command `npm run build`, install command `npm ci`, output directory `dist` and Node.js 24. The `vercel.json` file configures the gateway function. Each push deploys the API separately from GitHub Pages.
+The workflow installs locked dependencies, runs tests, builds the static `dist/` directory, uploads it and deploys it with the official Pages actions. The repository already has a working Pages workflow. Pages availability for this public repository does not depend on Developer Program membership.
 
-Production needs a publicly reachable API domain. Keep previews protected if desired; production must accept requests from visitors to the public Pages frontend. CORS only accepts the configured frontend origin. Public API reachability does not remove OAuth/session validation on authenticated routes.
+## Runtime
 
-Configure these variables in the Vercel project's production environment, never in GitHub Pages or source code:
+The app calls the public GitHub REST API directly from the browser. No OAuth app, token, secret, database or Vercel gateway is needed. Search and profile lookups are subject to public API limits. Requests have timeouts and display explicit errors.
 
-| Variable | Purpose |
-| --- | --- |
-| `GITHUB_CLIENT_ID` | Existing GitHub OAuth App client ID |
-| `GITHUB_CLIENT_SECRET` | Existing OAuth App secret; store as sensitive |
-| `SESSION_SECRET` | Random value of at least 32 characters; store as sensitive |
-| `FRONTEND_URL` | `https://brunnojob.github.io/BadgeMasterfree/` |
-| `DATABASE_URL` | Neon Postgres connection string; store as sensitive |
+The achievement checklist uses `localStorage` under `bm.plan.v2`. It is a single personal checklist for this browser, independent of the username being inspected. It is not synced to GitHub. If storage is blocked, the app remains usable for the current page session and can export the checklist as Markdown. The coauthor form is processed locally and its name/email are not saved or transmitted by the app.
 
-Redeploy after changing environment variables. The frontend's `web/config.js` must point to the verified production URL ending in `/api/gateway`.
+The public GitHub API does not provide a complete authoritative achievement inventory. The UI displays public activity and guides, not verified badge ownership or automatic badge grants. Private contributions are not queried.
 
-## GitHub OAuth App
+Stars, follows, sponsorships and pull requests are handled on GitHub using direct links. No write permission is requested.
 
-Keep the homepage and authorization callback exactly `https://brunnojob.github.io/BadgeMasterfree/`. Moving the backend does not change this callback: the frontend receives the code and sends it to the new API with the encrypted PKCE flow. Do not configure the Vercel backend as the OAuth callback.
+## Vercel migration
 
-The backend uses `read:user`, `public_repo` and `user:follow`. GitHub OAuth's `public_repo` permission is broader than starring alone. Sessions are encrypted, expire after at most one hour and stay only in page memory. No GitHub tokens are stored in localStorage, sessionStorage, URLs or the profile database. sessionStorage holds only the ten-minute OAuth state and encrypted flow.
+`web/config.js` no longer selects a Vercel endpoint. `vercel.json` is removed, and the build explicitly includes only the static frontend files and selected artwork. The former frontend is archived under `legacy/web/`; the optional backend source and tests remain outside the deployed artifact. The historical server instructions are in `docs/LEGACY-SERVER.md`.
 
-The existing Fly secrets do not transfer automatically. Enter the OAuth App's credentials directly in Vercel; do not paste them into issues, chat or files. If you no longer have the client secret, manage it in GitHub Settings → Developer settings → OAuth Apps, then enter it in Vercel.
+Repository changes do not automatically disconnect a Vercel Git integration or remove its hosted project. After the Pages deployment has been verified, the old Vercel project's Git connection can be disconnected separately. Preserve or export any member database before retiring infrastructure; the static migration does not move or delete those records.
 
-## Persistent profiles
-
-In the Vercel project open Storage, connect a Neon Postgres database and expose its `DATABASE_URL` to Production. Review the provider's plan and terms before creating the resource. Do not reuse an unrelated application's database.
-
-The API lazily creates `badgemaster_members` on the first community operation. The configured database role therefore needs table-creation permission for initial setup. The table stores verified GitHub numeric IDs, logins, opt-in profiles, visibility and update timestamps. Parameterized queries handle reads, upserts, searches and deletion. Directory pages contain at most 24 visible members.
-
-Vercel explicitly rejects the local SQLite adapter, including `/tmp` paths, because these do not persist across instances or deployments. When `DATABASE_URL` is missing, OAuth can still work while community operations return an explicit 503. The `status` response reports configured variable names and `communityReady`; it does not test database connectivity.
-
-There is no automatic import of a prior SQLite database. If an older deployment contains member records, back it up and import verified records before enabling community writes. The failed Fly deployment did not establish a persistent volume.
-
-## Diagnostics
-
-Open the configured gateway with `?action=status`. A successful deployment returns JSON with `platform: "vercel"`. Login requires `ready: true` and an empty `missing` array. Profiles additionally require `communityReady: true` and a reachable database. Status never includes secret values.
-
-If the API returns a Vercel authentication page instead of JSON, check the production deployment protection settings. If it returns 503 with `OAUTH_NOT_CONFIGURED`, fill the named variables and redeploy.
-
-## Local development and validation
+## Local validation
 
 ```sh
 npm ci
 npm test
 npm run build
-npm start
+python3 -m http.server 8080 --directory dist
 ```
 
-Use Node.js 24. Copy `.env.example` to `.env`. Leave `DATABASE_URL` empty to use `COMMUNITY_DB_PATH=./data/community.sqlite` locally. To test Postgres, configure a dedicated development Neon database. Never point local tests at the production member database.
-
-Tests cover SQLite persistence, profile validation, visibility and pagination, OAuth state/PKCE, session integrity, project ownership, parameterized Postgres operations and refusal of ephemeral storage on Vercel. Complete a real OAuth login and profile round-trip after the production variables are configured.
-
-## GitHub Pages
-
-In Settings → Pages, choose GitHub Actions. `Publish BadgeMasterfree` installs the locked dependencies, tests, builds `web/` into `dist/` and deploys the frontend. Secrets and the server implementation are not copied into `dist/`.
-
-## User actions
-
-Creating a GitHub account opens the official `https://github.com/signup` page. BadgeMasterfree neither collects GitHub passwords nor creates independent password accounts. Community profiles belong to the identity returned by GitHub OAuth. Repository ownership and visibility are checked before highlighting projects. Stars and follows still require an individual confirmation; browsing does not perform them.
+The static build has no server routes. `npm start` remains the optional legacy backend development command; it is not the Pages preview command.
