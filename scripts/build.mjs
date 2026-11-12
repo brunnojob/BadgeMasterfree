@@ -23,6 +23,8 @@ const css=await readFile('web/style.css','utf8');
 const cssName=`style.${hash(css)}.css`;
 const html=(await readFile('web/index.html','utf8')).replace('href="style.css"',`href="${cssName}"`).replace('src="app.js"',`src="${outputs['app.js']}"`);
 await writeFile(`dist/${cssName}`,css);await writeFile('dist/index.html',html);
+const signup=(await readFile('web/cadastro.html','utf8')).replace('href="style.css"',`href="${cssName}"`);
+await writeFile('dist/cadastro.html',signup);
 for(const [name,path] of Object.entries(assets))await cp(`Media/Badges/${path}`,`dist/assets/${name}`);
 await cp('Media/Badges/Star-Struck/PNG/StarStruck_Gold.png','dist/badge.png');
 await writeFile('dist/.nojekyll','');

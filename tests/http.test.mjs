@@ -8,6 +8,10 @@ test('HTTP runtime serves built frontend and gateway without exposing source',as
  const url=`http://127.0.0.1:${server.address().port}`;
  try{
   assert.equal((await fetch(url+'/healthz')).status,200);
+ const signup=await fetch(url+'/cadastro.html');assert.equal(signup.status,200);
+ const signupHtml=await signup.text();assert.match(signupHtml,/https:\/\/github\.com\/signup/);
+ assert.match(signupHtml,/href="style\.[a-f0-9]{12}\.css"/);
+ assert.match(signupHtml,/href="\.\/#automation"/);
   const page=await fetch(url+'/');assert.equal(page.status,200);const html=await page.text();assert.match(html,/BadgeMasterfree/);
   const script=html.match(/src="(app\.[a-f0-9]{12}\.js)"/)[1];
   const style=html.match(/href="(style\.[a-f0-9]{12}\.css)"/)[1];
